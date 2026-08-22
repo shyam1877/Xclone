@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { Bookmark, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
 import axiosInstance from "@/lib/axiosInstance";
 import TweetCard from "./TweetCard";
 import LoadingSpinner from "./loading-spinner";
@@ -10,6 +11,7 @@ import { Card, CardContent } from "./ui/card";
 
 export default function BookmarksPage() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [bookmarkedTweets, setBookmarkedTweets] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -50,7 +52,7 @@ export default function BookmarksPage() {
     <div className="min-h-screen bg-black text-white">
       {/* Header */}
       <div className="sticky top-0 bg-black/90 backdrop-blur-md border-b border-gray-800 z-10 px-4 py-3">
-        <h1 className="text-xl font-bold text-white">Bookmarks</h1>
+        <h1 className="text-xl font-bold text-white">{t("bookmarks.title")}</h1>
         <p className="text-xs text-gray-500">@{user?.username}</p>
       </div>
 
@@ -59,7 +61,7 @@ export default function BookmarksPage() {
         {loading ? (
           <div className="py-24 text-center">
             <LoadingSpinner size="lg" className="mx-auto mb-4" />
-            <p className="text-gray-400 text-sm">Loading bookmarks...</p>
+            <p className="text-gray-400 text-sm">{t("bookmarks.loading")}</p>
           </div>
         ) : bookmarkedTweets.length === 0 ? (
           <Card className="bg-black border-none">
@@ -68,9 +70,9 @@ export default function BookmarksPage() {
                 <div className="mx-auto w-16 h-16 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400">
                   <Bookmark className="h-8 w-8" />
                 </div>
-                <h2 className="text-2xl font-bold text-white">Save posts for later</h2>
+                <h2 className="text-2xl font-bold text-white">{t("bookmarks.empty")}</h2>
                 <p className="text-gray-400 text-sm leading-relaxed">
-                  Don't let the good ones fly away! Bookmark posts to easily find them again in the future.
+                  {t("bookmarks.emptyDesc")}
                 </p>
               </div>
             </CardContent>

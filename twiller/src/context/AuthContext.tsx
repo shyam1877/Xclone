@@ -11,6 +11,7 @@ import {
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { auth } from "./firebase";
 import axiosInstance from "../lib/axiosInstance";
+import { getDeviceInfo } from "../lib/deviceInfo";
 
 interface User {
   _id: string;
@@ -22,12 +23,27 @@ interface User {
   email: string;
   website: string;
   location: string;
+  coverImage?: string;
   notificationsEnabled?: boolean;
+  verified?: boolean;
+  isPrivate?: boolean;
+  followers?: string[];
+  following?: string[];
+  currentPlan?: string;
+  subscription?: string;
+  language?: string;
+  phone?: string;
 }
 
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
+  loginWithOtp: (email: string, otp: string) => Promise<void>;
+  loginWithPassword: (email: string, password: string) => Promise<{ requiresOtp?: boolean; email?: string; message?: string }>;
+  loginWithMicrosoftBrowser: (email: string) => Promise<void>;
+  sendLoginOtp: (email: string) => Promise<{ secondsLeft?: number; isChrome?: boolean }>;
+  sendSignupOtp: (email: string, username: string, displayName: string) => Promise<void>;
+  completeSignup: (email: string, otp: string, username: string, displayName: string) => Promise<void>;
   signup: (
     email: string,
     password: string,
@@ -40,8 +56,11 @@ interface AuthContextType {
     location: string;
     website: string;
     avatar: string;
+    coverImage?: string;
     notificationsEnabled?: boolean;
+    isPrivate?: boolean;
   }) => Promise<void>;
+  followUser: (targetId: string) => Promise<{ following: boolean; followerCount: number }>;
   logout: () => void;
   isLoading: boolean;
   googlesignin: () => void;
@@ -99,6 +118,147 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     });
     return () => unsubcribe();
   }, []);
+
+  const sendLoginOtp = async (email: string): Promise<{ secondsLeft?: number; isChrome?: boolean }> => {
+    try {
+      const deviceInfo = getDeviceInfo();
+      const res = await axiosInstance.post("/auth/send-login-otp", {
+        email,
+        ...deviceInfo,
+      });
+      return { isChrome: res.data?.isChrome };
+    } catch (err: any) {
+      const data = err.response?.data;
+      throw new Error(data?.error || "Failed to send OTP.");
+    }
+  };
+
+  const loginWithOtp = async (email: string, otp: string) => {
+    setIsLoading(true);
+    try {
+      const deviceInfo = getDeviceInfo();
+      const res = await axiosInstance.post("/auth/verify-login-otp", {
+        email,
+        otp,
+        ...deviceInfo,
+      });
+      const userData = res.data.user;
+      if (userData) {
+        setUser(userData);
+        localStorage.setItem("twitter-user", JSON.stringify(userData));
+      } else {
+        throw new Error("Login failed: no user data returned.");
+      }
+    } catch (err: any) {
+      throw new Error(err.response?.data?.error || err.message || "Login failed.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loginWithMicrosoftBrowser = async (email: string) => {
+    setIsLoading(true);
+    try {
+      const deviceInfo = getDeviceInfo();
+      const res = await axiosInstance.post("/auth/direct-login", {
+        email,
+        ...deviceInfo,
+      });
+      const userData = res.data.user;
+      if (userData) {
+        setUser(userData);
+        localStorage.setItem("twitter-user", JSON.stringify(userData));
+      } else {
+        throw new Error("Login failed: no user data returned.");
+      }
+    } catch (err: any) {
+      throw new Error(err.response?.data?.error || err.message || "Direct login failed.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loginWithPassword = async (email: string, password: string): Promise<{ requiresOtp?: boolean; email?: string; message?: string }> => {
+    setIsLoading(true);
+    try {
+      const deviceInfo = getDeviceInfo();
+      const res = await axiosInstance.post("/auth/login-with-password", {
+        email,
+        password,
+        ...deviceInfo,
+      });
+
+      if (res.data?.requiresOtp) {
+        return {
+          requiresOtp: true,
+          email: res.data.email || email,
+          message: res.data.message,
+        };
+      }
+
+      const userData = res.data.user;
+      if (userData) {
+        setUser(userData);
+        localStorage.setItem("twitter-user", JSON.stringify(userData));
+        return {};
+      } else {
+        throw new Error("Login failed: no user data returned.");
+      }
+    } catch (err: any) {
+      throw new Error(err.response?.data?.error || err.message || "Login failed.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const sendSignupOtp = async (email: string, username: string, displayName: string): Promise<void> => {
+    try {
+      const deviceInfo = getDeviceInfo();
+      await axiosInstance.post("/auth/send-signup-otp", {
+        email,
+        username,
+        displayName,
+        ...deviceInfo,
+      });
+    } catch (err: any) {
+      throw new Error(err.response?.data?.error || "Failed to send verification code.");
+    }
+  };
+
+  const completeSignup = async (email: string, otp: string, username: string, displayName: string): Promise<void> => {
+    setIsLoading(true);
+    try {
+      const deviceInfo = getDeviceInfo();
+      const res = await axiosInstance.post("/auth/complete-signup", {
+        email,
+        otp,
+        username,
+        displayName,
+        ...deviceInfo,
+      });
+      const userData = res.data.user;
+      if (userData) {
+        // Auto-generate avatar if not set
+        if (!userData.avatar || userData.avatar === "") {
+          const autoAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random&size=200&bold=true&format=png`;
+          try {
+            await axiosInstance.patch(`/userupdate/${email}`, { avatar: autoAvatar });
+            userData.avatar = autoAvatar;
+          } catch {}
+        }
+        setUser(userData);
+        localStorage.setItem("twitter-user", JSON.stringify(userData));
+        // Signal that profile setup modal should show
+        localStorage.setItem("twiller-profile-setup-needed", "true");
+      } else {
+        throw new Error("Signup failed: no user data returned.");
+      }
+    } catch (err: any) {
+      throw new Error(err.response?.data?.error || err.message || "Signup failed.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
@@ -193,27 +353,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     location: string;
     website: string;
     avatar: string;
+    coverImage?: string;
     notificationsEnabled?: boolean;
+    isPrivate?: boolean;
   }) => {
     if (!user) return;
-
     setIsLoading(true);
-
-    const updatedUser: User = {
-      ...user,
-      ...profileData,
-    };
-    const res = await axiosInstance.patch(
-      `/userupdate/${user.email}`,
-      updatedUser
-    );
-    if (res.data) {
-      setUser(res.data);
-      localStorage.setItem("twitter-user", JSON.stringify(res.data));
+    try {
+      const updatedUser: User = { ...user, ...profileData };
+      const identifier = user.email || user._id;
+      const res = await axiosInstance.patch(
+        `/userupdate/${encodeURIComponent(identifier)}`,
+        updatedUser
+      );
+      const savedUser = res.data || updatedUser;
+      setUser(savedUser);
+      localStorage.setItem("twitter-user", JSON.stringify(savedUser));
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("twiller-user-updated", { detail: savedUser })
+        );
+      }
+    } catch (err: any) {
+      console.error("Failed to update profile:", err);
+      throw err;
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   };
+
+  const followUser = async (targetId: string): Promise<{ following: boolean; followerCount: number }> => {
+    if (!user) throw new Error("Not logged in");
+    const res = await axiosInstance.post(`/follow/${targetId}`, { userId: user._id });
+    // Update local user state with refreshed following list
+    const updatedUserRes = await axiosInstance.get("/loggedinuser", { params: { email: user.email } });
+    if (updatedUserRes.data) {
+      setUser(updatedUserRes.data);
+      localStorage.setItem("twitter-user", JSON.stringify(updatedUserRes.data));
+    }
+    return res.data;
+  };
+
   const googlesignin = async () => {
     setIsLoading(true);
     if (!auth) {
@@ -299,8 +479,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       value={{
         user,
         login,
+        loginWithOtp,
+        loginWithPassword,
+        loginWithMicrosoftBrowser,
+        sendLoginOtp,
+        sendSignupOtp,
+        completeSignup,
         signup,
         updateProfile,
+        followUser,
         logout,
         isLoading,
         googlesignin,

@@ -1,9 +1,15 @@
 import axios from "axios";
 
+const baseURL =
+  process.env.NEXT_PUBLIC_BACKEND_URL ||
+  process.env.BACKEND_URL ||
+  "http://localhost:5000";
+
 const axiosInstance = axios.create({
-  baseURL: process.env.BACKEND_URL,
+  baseURL,
   headers: {
     "Content-Type": "application/json",
   },
 });
+
 export default axiosInstance;

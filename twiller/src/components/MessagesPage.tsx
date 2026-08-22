@@ -5,6 +5,7 @@ import { Send, Image, Smile, Info, Mail } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface Message {
   id: string;
@@ -56,6 +57,7 @@ const initialContacts: Contact[] = [
 ];
 
 export default function MessagesPage() {
+  const { t } = useLanguage();
   const [selectedContact, setSelectedContact] = useState<Contact>(initialContacts[0]);
   const [chatHistories, setChatHistories] = useState<Record<string, Message[]>>(() => {
     const histories: Record<string, Message[]> = {};
@@ -119,7 +121,7 @@ export default function MessagesPage() {
       {/* Left Pane - Contacts List */}
       <div className="w-80 border-r border-gray-800 flex flex-col h-full bg-black">
         <div className="p-4 border-b border-gray-800 flex items-center justify-between">
-          <h1 className="text-xl font-bold text-white">Messages</h1>
+          <h1 className="text-xl font-bold text-white">{t("messages.title")}</h1>
         </div>
 
         <div className="flex-1 overflow-y-auto divide-y divide-gray-900">
@@ -226,7 +228,7 @@ export default function MessagesPage() {
           <Input
             value={inputValue}
             onChange={e => setInputValue(e.target.value)}
-            placeholder="Start a new message"
+            placeholder={t("messages.typeMessage")}
             className="flex-1 bg-gray-900 border-none rounded-full text-white placeholder-gray-500 px-4 py-2 h-10 text-sm focus-visible:ring-1 focus-visible:ring-blue-500"
             disabled={isTyping}
           />
