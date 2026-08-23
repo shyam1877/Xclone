@@ -354,7 +354,20 @@ async function recordLoginHistory({ user, email, env, status, reason = "" }) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 app.get("/", (req, res) => {
-  res.send("Twiller backend is running successfully");
+  res.json({
+    message: "Twiller backend is running successfully",
+    status: "online",
+    timestamp: new Date().toISOString(),
+  });
+});
+
+app.get("/health", (req, res) => {
+  const isDbConnected = mongoose.connection.readyState === 1;
+  res.status(isDbConnected ? 200 : 503).json({
+    server: "ok",
+    database: isDbConnected ? "connected" : "disconnected",
+    dbState: mongoose.connection.readyState,
+  });
 });
 
 // Register
@@ -2217,14 +2230,16 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 const MONGODB_URL = process.env.MONGODB_URL || "mongodb://localhost:27017/twiller";
 
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server running on port ${PORT}`);
+});
+
 mongoose
   .connect(MONGODB_URL)
   .then(() => {
     console.log("Connected to MongoDB successfully");
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-    });
   })
   .catch((err) => {
-    console.error("MongoDB connection error:", err);
+    console.error("MongoDB connection error:", err.message);
+    console.warn("Please verify your MONGODB_URL environment variable and ensure IP 0.0.0.0/0 is whitelisted in MongoDB Atlas Network Access.");
   });

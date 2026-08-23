@@ -1,0 +1,13 @@
+node_modules/
+.env
+.env.local
+.env.*.local
+.next/
+out/
+build/
+dist/
+*.log
+backend/uploads/audio/*
+backend/uploads/images/*
+!backend/uploads/audio/.gitkeep
+!backend/uploads/images/.gitkeep
