@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import axios from "axios";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://xclone-nesz.onrender.com";
 
 type Step = "mode" | "otp-request" | "otp-verify" | "audio" | "posting";
 type AudioMode = "record" | "upload" | null;

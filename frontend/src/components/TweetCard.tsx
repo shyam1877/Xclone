@@ -300,7 +300,7 @@ export default function TweetCard({ tweet, onProfileClick }: TweetCardProps) {
                 src={
                   tweetstate.audio.url.startsWith("http")
                     ? tweetstate.audio.url
-                    : `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000"}${tweetstate.audio.url}`
+                    : `${process.env.NEXT_PUBLIC_BACKEND_URL || "https://xclone-nesz.onrender.com"}${tweetstate.audio.url}`
                 }
               >
                 Your browser does not support audio playback.
