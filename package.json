@@ -2,6 +2,16 @@
   "name": "twiller-app",
   "version": "1.0.0",
   "private": true,
+  "engines": {
+    "node": "20.x"
+  },
+  "allowScripts": {
+    "@firebase/util": true,
+    "@tailwindcss/oxide": true,
+    "protobufjs": true,
+    "sharp": true,
+    "unrs-resolver": true
+  },
   "scripts": {
     "backend": "npm --prefix backend start",
     "backend:dev": "npm --prefix backend run dev",

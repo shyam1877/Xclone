@@ -3,7 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": ">=20.0.0"
+    "node": "20.x"
+  },
+  "allowScripts": {
+    "@firebase/util": true,
+    "@tailwindcss/oxide": true,
+    "protobufjs": true,
+    "sharp": true,
+    "unrs-resolver": true
   },
   "scripts": {
     "dev": "next dev",
