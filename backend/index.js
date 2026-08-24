@@ -1743,11 +1743,12 @@ app.post("/auth/complete-signup", async (req, res) => {
     await record.save();
 
     // Create user
+    const autoAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random&size=200&bold=true&format=png`;
     const newUser = new User({
       username: username.toLowerCase(),
       displayName,
       email: email.toLowerCase(),
-      avatar: "",
+      avatar: autoAvatar,
       bio: "",
       location: "",
       website: "",

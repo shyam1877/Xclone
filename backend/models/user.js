@@ -2,7 +2,11 @@ import mongoose from "mongoose";
 const UserSchema = mongoose.Schema({
   username: { type: String, required: true },
   displayName: { type: String, required: true },
-  avatar: { type: String, required: true },
+  avatar: {
+    type: String,
+    default:
+      "https://images.pexels.com/photos/1139743/pexels-photo-1139743.jpeg?auto=compress&cs=tinysrgb&w=400",
+  },
   email: { type: String, required: true, unique: true },
   bio: { type: String, default: "" },
   location: { type: String, default: "" },
