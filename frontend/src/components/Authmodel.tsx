@@ -158,11 +158,16 @@ export default function AuthModal({
     }
     setSending(true);
     try {
-      await sendLoginOtp(loginEmail.trim());
+      const res = await sendLoginOtp(loginEmail.trim());
       setLoginStep("otp");
-      setOtpDigits(["", "", "", "", "", ""]);
+      if (res?.otp && typeof res.otp === "string" && res.otp.length === 6) {
+        setOtpDigits(res.otp.split(""));
+        setSuccess(`Code sent to ${loginEmail} (Code: ${res.otp})`);
+      } else {
+        setOtpDigits(["", "", "", "", "", ""]);
+        setSuccess(`Code sent to ${loginEmail}`);
+      }
       setCooldown(60);
-      setSuccess(`Code sent to ${loginEmail}`);
       setTimeout(() => otpRefs.current[0]?.focus(), 100);
     } catch (err: any) {
       setError(err.message || "Failed to send code.");
@@ -176,10 +181,15 @@ export default function AuthModal({
     clearMessages();
     setSending(true);
     try {
-      await sendLoginOtp(loginEmail.trim());
+      const res = await sendLoginOtp(loginEmail.trim());
       resetOtp();
+      if (res?.otp && typeof res.otp === "string" && res.otp.length === 6) {
+        setOtpDigits(res.otp.split(""));
+        setSuccess(`New code: ${res.otp}`);
+      } else {
+        setSuccess("New code sent.");
+      }
       setCooldown(60);
-      setSuccess("New code sent.");
     } catch (err: any) {
       setError(err.message || "Failed to resend code.");
     } finally {
@@ -217,9 +227,14 @@ export default function AuthModal({
       const res = await loginWithPassword(loginEmail.trim(), loginPassword);
       if (res?.requiresOtp) {
         setLoginStep("otp");
-        setOtpDigits(["", "", "", "", "", ""]);
+        if (res.otp && typeof res.otp === "string" && res.otp.length === 6) {
+          setOtpDigits(res.otp.split(""));
+          setSuccess(res.message || `Code: ${res.otp}`);
+        } else {
+          setOtpDigits(["", "", "", "", "", ""]);
+          setSuccess(res.message || "Google Chrome requires OTP verification: code sent to your email.");
+        }
         setCooldown(60);
-        setSuccess(res.message || "Google Chrome requires OTP verification: code sent to your email.");
         setTimeout(() => otpRefs.current[0]?.focus(), 100);
         return;
       }

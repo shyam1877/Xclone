@@ -41,7 +41,7 @@ interface AuthContextType {
   loginWithOtp: (email: string, otp: string) => Promise<void>;
   loginWithPassword: (email: string, password: string) => Promise<{ requiresOtp?: boolean; email?: string; message?: string }>;
   loginWithMicrosoftBrowser: (email: string) => Promise<void>;
-  sendLoginOtp: (email: string) => Promise<{ secondsLeft?: number; isChrome?: boolean }>;
+  sendLoginOtp: (email: string) => Promise<any>;
   sendSignupOtp: (email: string, username: string, displayName: string) => Promise<any>;
   completeSignup: (email: string, otp: string, username: string, displayName: string) => Promise<void>;
   signup: (
@@ -119,14 +119,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     return () => unsubcribe();
   }, []);
 
-  const sendLoginOtp = async (email: string): Promise<{ secondsLeft?: number; isChrome?: boolean }> => {
+  const sendLoginOtp = async (email: string): Promise<any> => {
     try {
       const deviceInfo = getDeviceInfo();
       const res = await axiosInstance.post("/auth/send-login-otp", {
         email,
         ...deviceInfo,
       });
-      return { isChrome: res.data?.isChrome };
+      return res.data;
     } catch (err: any) {
       const data = err.response?.data;
       throw new Error(data?.error || "Failed to send OTP.");
@@ -178,7 +178,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  const loginWithPassword = async (email: string, password: string): Promise<{ requiresOtp?: boolean; email?: string; message?: string }> => {
+  const loginWithPassword = async (email: string, password: string): Promise<{ requiresOtp?: boolean; email?: string; message?: string; otp?: string }> => {
     setIsLoading(true);
     try {
       const deviceInfo = getDeviceInfo();
@@ -193,6 +193,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           requiresOtp: true,
           email: res.data.email || email,
           message: res.data.message,
+          otp: res.data.otp,
         };
       }
 
