@@ -42,7 +42,7 @@ interface AuthContextType {
   loginWithPassword: (email: string, password: string) => Promise<{ requiresOtp?: boolean; email?: string; message?: string }>;
   loginWithMicrosoftBrowser: (email: string) => Promise<void>;
   sendLoginOtp: (email: string) => Promise<{ secondsLeft?: number; isChrome?: boolean }>;
-  sendSignupOtp: (email: string, username: string, displayName: string) => Promise<void>;
+  sendSignupOtp: (email: string, username: string, displayName: string) => Promise<any>;
   completeSignup: (email: string, otp: string, username: string, displayName: string) => Promise<void>;
   signup: (
     email: string,
@@ -211,15 +211,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  const sendSignupOtp = async (email: string, username: string, displayName: string): Promise<void> => {
+  const sendSignupOtp = async (email: string, username: string, displayName: string): Promise<any> => {
     try {
       const deviceInfo = getDeviceInfo();
-      await axiosInstance.post("/auth/send-signup-otp", {
+      const res = await axiosInstance.post("/auth/send-signup-otp", {
         email,
         username,
         displayName,
         ...deviceInfo,
       });
+      return res.data;
     } catch (err: any) {
       throw new Error(err.response?.data?.error || "Failed to send verification code.");
     }

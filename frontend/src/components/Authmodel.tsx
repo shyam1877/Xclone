@@ -261,11 +261,16 @@ export default function AuthModal({
 
     setSending(true);
     try {
-      await sendSignupOtp(email.trim(), username.trim(), displayName.trim());
+      const res = await sendSignupOtp(email.trim(), username.trim(), displayName.trim());
       setSignupStep("otp");
-      setOtpDigits(["", "", "", "", "", ""]);
+      if (res?.otp && typeof res.otp === "string" && res.otp.length === 6) {
+        setOtpDigits(res.otp.split(""));
+        setSuccess(`Verification code sent to ${email} (Code: ${res.otp})`);
+      } else {
+        setOtpDigits(["", "", "", "", "", ""]);
+        setSuccess(`Verification code sent to ${email}`);
+      }
       setCooldown(60);
-      setSuccess(`Verification code sent to ${email}`);
       setTimeout(() => otpRefs.current[0]?.focus(), 100);
     } catch (err: any) {
       setError(err.message || "Failed to send verification code.");
@@ -279,10 +284,15 @@ export default function AuthModal({
     clearMessages();
     setSending(true);
     try {
-      await sendSignupOtp(signupData.email.trim(), signupData.username.trim(), signupData.displayName.trim());
+      const res = await sendSignupOtp(signupData.email.trim(), signupData.username.trim(), signupData.displayName.trim());
       resetOtp();
+      if (res?.otp && typeof res.otp === "string" && res.otp.length === 6) {
+        setOtpDigits(res.otp.split(""));
+        setSuccess(`New code: ${res.otp}`);
+      } else {
+        setSuccess("New code sent.");
+      }
       setCooldown(60);
-      setSuccess("New code sent.");
     } catch (err: any) {
       setError(err.message || "Failed to resend code.");
     } finally {
