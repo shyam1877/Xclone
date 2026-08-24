@@ -1514,7 +1514,7 @@ app.post("/auth/verify-login-otp", async (req, res) => {
     return res.status(200).json({ user, message: "Login successful." });
   } catch (error) {
     console.error("Login OTP verify error:", error);
-    return res.status(500).json({ error: "Verification failed. Please try again." });
+    return res.status(500).json({ error: error.message || "Verification failed. Please try again." });
   }
 });
 
@@ -1767,7 +1767,7 @@ app.post("/auth/complete-signup", async (req, res) => {
     return res.status(201).json({ user: newUser, message: "Account created successfully." });
   } catch (error) {
     console.error("Complete signup error:", error);
-    return res.status(500).json({ error: "Failed to create account. Please try again." });
+    return res.status(500).json({ error: error.message || "Failed to create account. Please try again." });
   }
 });
 
