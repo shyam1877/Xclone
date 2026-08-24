@@ -94,15 +94,23 @@ const imageUpload = multer({
 });
 
 // ─── Nodemailer transporter ───────────────────────────────────────────────────
+const emailUser = process.env.EMAIL_USER ? process.env.EMAIL_USER.trim() : "";
+const emailPass = process.env.EMAIL_PASS ? process.env.EMAIL_PASS.replace(/\s+/g, "").trim() : "";
+
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false,
   auth: {
-    user: process.env.EMAIL_USER ? process.env.EMAIL_USER.trim() : "",
-    pass: process.env.EMAIL_PASS ? process.env.EMAIL_PASS.trim() : "",
+    user: emailUser,
+    pass: emailPass,
   },
-  connectionTimeout: 10000,
-  greetingTimeout: 10000,
-  socketTimeout: 15000,
+  tls: {
+    rejectUnauthorized: false,
+  },
+  connectionTimeout: 15000,
+  greetingTimeout: 15000,
+  socketTimeout: 20000,
 });
 
 // ─── Razorpay instance ────────────────────────────────────────────────────────
